@@ -49,7 +49,7 @@ Do not use this for generic Feishu messaging unrelated to the daily report.
 
 ```bash
 mkdir -p ~/.hermes/skills/productivity
-git clone https://github.com/temurlee/ai-design-daily.git ~/.hermes/skills/productivity/ai-design-daily
+git clone https://github.com/TAI-IPX/skills-lark-ai-design-daily.git ~/.hermes/skills/productivity/ai-design-daily
 cd ~/.hermes/skills/productivity/ai-design-daily
 npm install
 cp templates/env.example .env
@@ -238,12 +238,15 @@ Key rule: after a manual end-to-end verification succeeds, remove legacy runtime
 1. **Using `write_file` under this skill directory in protected Hermes profiles.** If blocked, write runtime files through `terminal`/Python instead.
 2. **Sending markdown directly.** This loses the Feishu card style. Use `send_to_feishu.mjs` only.
 3. **Leaving Teams/OpenClaw references.** This is now Hermes + Feishu/Lark, not Teams.
-4. **Missing Camofox auth.** If Camofox returns 403, check `CAMOFOX_API_KEY`.
-5. **Camofox engine crash.** If `/health` shows `browserConnected:false` or server errors mention `window is null`, restart the Camofox container.
-6. **Login wall.** If X/Twitter cookies are missing or expired, collection should fail clearly instead of reporting "0 tweets".
-7. **Hardcoded user IDs.** Reusable installs must use `.env` (`FEISHU_USER_ID`/`FEISHU_CHAT_ID`), not personal IDs baked into scripts.
-8. **Collection timeout.** `npm run strict` can exceed 300s when Camofox has stale browser contexts to clear. Use `timeout=600` for the terminal call. If the first run times out, retry — stale contexts get cleared on the first attempt and the second run typically succeeds.
-9. **FEISHU_USER_ID system-env leak.** If `FEISHU_USER_ID` exists in the shell environment (from a previous config, Docker env, or parent process), `source .env` does NOT unset it — `.env` only adds/overrides variables it defines. The send script prioritises `userId` over `chatId`, so even with `--chat-id` and `FEISHU_CHAT_ID` set, a lingering `FEISHU_USER_ID` causes the message to go to a P2P bot chat instead of the target group. **Fix:** when targeting a group, explicitly add `FEISHU_USER_ID=` (empty) to `.env` so `source .env` overrides the system value with an empty string, forcing the script to use `chatId`.
+4. **Missing Camofox auth.** Camofox requires **dual auth**: (a) `Authorization: Bearer <CAMOFOX_API_KEY>` header for API access, and (b) `userId` + `sessionKey` in the POST body for session management. If you get 403 from `/tabs`, the Bearer header is missing — usually because `.env` wasn't sourced before running the script. The `userId`/`sessionKey` defaults to `'main'` and works for single-user setups; override via `CAMOFOX_USER_ID`/`CAMOFOX_SESSION_KEY` env vars if needed.
+5. **Wrong entry point.** The script entry point is `scripts/run_strict.mjs` (or `npm run strict`). There is no `run_daily.mjs` — don't invent one.
+6. **Camofox engine crash.** If `/health` shows `browserConnected:false` or server errors mention `window is null`, restart the Camofox container.
+7. **Login wall.** If X/Twitter cookies are missing or expired, collection should fail clearly instead of reporting "0 tweets".
+8. **Hardcoded user IDs.** Reusable installs must use `.env` (`FEISHU_USER_ID`/`FEISHU_CHAT_ID`), not personal IDs baked into scripts.
+9. **Collection timeout.** `npm run strict` can exceed 300s when Camofox has stale browser contexts to clear. Use `timeout=600` for the terminal call, or run in background mode (`background=true` + `notify_on_complete=true`). If the first run times out, retry — stale contexts get cleared on the first attempt and the second run typically succeeds.
+10. **FEISHU_USER_ID system-env leak.** If `FEISHU_USER_ID` exists in the shell environment (from a previous config, Docker env, or parent process), `source .env` does NOT unset it — `.env` only adds/overrides variables it defines. The send script prioritises `userId` over `chatId`, so even with `--chat-id` and `FEISHU_CHAT_ID` set, a lingering `FEISHU_USER_ID` causes the message to go to a P2P bot chat instead of the target group. **Fix:** when targeting a group, explicitly add `FEISHU_USER_ID=` (empty) to `.env` so `source .env` overrides the system value with an empty string, forcing the script to use `chatId`. Always verify with `--dry-run` that the target line shows `chat_id=...` not `user_id=...`.
+11. **Hardcoded lark-cli paths.** The `resolveLarkCli()` function must only use `LARK_CLI_PATH` env var or fall back to `lark-cli` on PATH. Never hardcode local paths like `/home/hermes/...` — they break on every other machine.
+12. **Teams/O365 webhook legacy code.** `scripts/lib/shared.mjs` must not contain Teams webhook wrappers (`wrapCardForTeams`, `resolveWebhookUrls`) or `.teams-webhook` file references. This skill is Feishu/Lark only. If you find any Teams remnants, remove them.
 
 ## Verification Checklist
 
@@ -252,5 +255,5 @@ Key rule: after a manual end-to-end verification succeeds, remove legacy runtime
 - [ ] `curl $CAMOFOX_URL/health` returns healthy JSON.
 - [ ] `npm run strict` creates `cache/candidates.json`.
 - [ ] Hermes writes non-empty `cache/generated-report.md`.
-- [ ] `send_to_feishu.mjs --dry-run` outputs Schema 2.0 card JSON.
-- [ ] Real send returns a Feishu `message_id`.
+- [ ] `send_to_feishu.mjs --dry-run` outputs Schema 2.0 card JSON **and** the target line shows the correct `chat_id=` or `user_id=` (not a P2P bot chat when you intended a group).
+- [ ] Real send returns a Feishu `message_id` **and** the returned `chat_id` matches the intended target (not a different P2P chat).
