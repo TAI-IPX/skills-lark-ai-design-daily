@@ -1,22 +1,22 @@
-# AI Design Daily
+# AI 设计日报
 
-Hermes skill for generating a Chinese AI/design daily report from X/Twitter posts and sending it to Feishu/Lark as a Schema 2.0 interactive card.
+Hermes 技能：从 X/Twitter 采集 AI/设计相关推文，生成中文日报，并通过飞书发送 Schema 2.0 交互卡片。
 
-## What it does
+## 功能
 
-- Collects recent posts from configured X/Twitter accounts through `camofox-browser`.
-- Builds candidates and account coverage reports.
-- Lets Hermes write a polished Chinese daily report from real candidates.
-- Sends the final report through `lark-cli` as a Feishu interactive card.
+- 通过 `camofox-browser` 采集配置的 X/Twitter 账号最新推文。
+- 生成候选列表和账号覆盖报告。
+- 由 Hermes AI 基于真实候选内容撰写中文日报。
+- 通过 `lark-cli` 以飞书交互卡片形式发送日报。
 
-## Requirements
+## 环境要求
 
-- Hermes Agent with `terminal` and `file` toolsets available.
-- Node.js 18+.
-- `camofox-browser` REST API with usable X/Twitter session/cookies.
-- `lark-cli` installed and authenticated for Feishu/Lark sending.
+- Hermes Agent，需启用 `terminal` 和 `file` 工具集。
+- Node.js 18+。
+- `camofox-browser` REST API，需有可用的 X/Twitter 会话/cookie。
+- `lark-cli` 已安装并完成飞书认证。
 
-## Install
+## 安装
 
 ```bash
 mkdir -p ~/.hermes/skills/productivity
@@ -26,16 +26,16 @@ npm install
 cp templates/env.example .env
 ```
 
-Edit `.env`:
+编辑 `.env`：
 
 ```env
 CAMOFOX_URL=http://your-camofox-host:9377
-# CAMOFOX_API_KEY=optional-if-your-camofox-requires-auth
+# CAMOFOX_API_KEY=*** camofox 需要认证则填写
 FEISHU_USER_ID=ou_xxx
-# or FEISHU_CHAT_ID=oc_xxx
+# 或 FEISHU_CHAT_ID=oc_xxx
 ```
 
-## Manual run
+## 手动运行
 
 ```bash
 export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -44,26 +44,26 @@ set -a && source .env && set +a
 npm run strict
 ```
 
-`npm run strict` intentionally stops before sending if `cache/generated-report.md` is missing. Hermes should then read `cache/candidates.json`, write `cache/generated-report.md`, and run the send command.
+`npm run strict` 会在缺少 `cache/generated-report.md` 时主动停止，等待 Hermes 读取 `cache/candidates.json` 生成日报内容，之后再执行发送命令。
 
-## Cron
+## 定时任务
 
-Use `templates/cron-prompt.md` as the job prompt, set the workdir to this skill directory, and enable `terminal,file` toolsets.
+使用 `templates/cron-prompt.md` 作为任务提示，设置 workdir 指向本技能目录，启用 `terminal,file` 工具集。
 
-Example schedule: `0 10 * * *`.
+示例定时：每天 10:00（`0 10 * * *`）。
 
-## Customize sources
+## 自定义数据源
 
-Edit `references/query-presets.json` to change watched accounts and keywords.
+编辑 `references/query-presets.json` 可修改监听的账号和关键词。
 
-## Runtime files
+## 运行时文件
 
-These are local only and must not be committed:
+以下为本地文件，不会提交到 Git：
 
 - `.env`
 - `cache/`
-- logs
+- 日志文件
 
-## License
+## 开源协议
 
 MIT
