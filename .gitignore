@@ -1,0 +1,6 @@
+.env
+cache/
+*.log
+.DS_Store
+node_modules/
+.teams-webhook

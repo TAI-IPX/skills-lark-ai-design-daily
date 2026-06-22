@@ -1,0 +1,21 @@
+{
+  "name": "ai-design-daily",
+  "version": "1.0.0",
+  "description": "Hermes skill for collecting AI/design posts from X/Twitter, writing a Chinese daily report, and sending it as a Feishu/Lark interactive card.",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "collect:camofox": "node scripts/collect_camofox.mjs",
+    "collect:ids": "node scripts/collect_ids_camofox.mjs",
+    "attempts": "node scripts/build_account_attempts.mjs",
+    "generate": "node scripts/generate_report.mjs",
+    "strict": "node scripts/run_strict.mjs",
+    "send": "node scripts/send_to_feishu.mjs --report-file cache/generated-report.md",
+    "send:dry-run": "node scripts/send_to_feishu.mjs --dry-run --skip-validation --report-file cache/generated-report.md"
+  },
+  "dependencies": {},
+  "private": true,
+  "license": "MIT"
+}
